@@ -2,17 +2,26 @@ import { useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip
 } from 'recharts';
 import {
   TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, AlertTriangle,
   Sparkles, CheckCircle2, ShieldAlert, ArrowRight, Upload, Banknote
 } from 'lucide-react';
 import CreditScoreCard from '../components/CreditScoreCard';
-import { incomeData, recentTransactions, riskAlerts } from '../data/mockData';
+import { riskAlerts } from '../data/mockData';
+import { useStatement } from '../contexts/StatementContext';
 
 export default function DashboardOverview() {
   const { openAIChat } = useOutletContext() || {};
+  const { statementData } = useStatement();
+
+  const { financials, creditScoreData, transactions, incomeTrends, fileName } = statementData;
+  const { monthlyIncome, monthlyExpenses, savingsAmount, currentEmi } = financials;
+  const { score, rating } = creditScoreData;
+
+  const savingsRatePct = monthlyIncome > 0 ? Math.round((savingsAmount / monthlyIncome) * 100) : 31;
+  const dtiPct = monthlyIncome > 0 ? ((currentEmi / monthlyIncome) * 100).toFixed(1) : '10.7';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
@@ -21,7 +30,7 @@ export default function DashboardOverview() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
         
         {/* Hero AI Credit Score Card */}
-        <CreditScoreCard score={782} rating="Excellent" trend="+24" />
+        <CreditScoreCard score={score} rating={rating} trend="+24" />
 
         {/* Financial Health Summary Grid Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
@@ -30,10 +39,10 @@ export default function DashboardOverview() {
           <div className="card">
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>MONTHLY INCOME</div>
             <div style={{ fontSize: '24px', fontWeight: 800, margin: '8px 0', color: 'var(--text-primary)' }}>
-              ₹78,500
+              ₹{monthlyIncome.toLocaleString('en-IN')}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <ArrowUpRight size={14} /> +8.4% MoM
+              <ArrowUpRight size={14} /> Verified via Bank Statement
             </div>
           </div>
 
@@ -41,10 +50,10 @@ export default function DashboardOverview() {
           <div className="card">
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>MONTHLY EXPENSES</div>
             <div style={{ fontSize: '24px', fontWeight: 800, margin: '8px 0', color: 'var(--text-primary)' }}>
-              ₹42,300
+              ₹{monthlyExpenses.toLocaleString('en-IN')}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <ArrowDownRight size={14} /> 54% of income
+              <ArrowDownRight size={14} /> {Math.round((monthlyExpenses/monthlyIncome)*100)}% of income
             </div>
           </div>
 
@@ -52,18 +61,18 @@ export default function DashboardOverview() {
           <div className="card">
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>SAVINGS</div>
             <div style={{ fontSize: '24px', fontWeight: 800, margin: '8px 0', color: 'var(--accent-green)' }}>
-              ₹24,200
+              ₹{savingsAmount.toLocaleString('en-IN')}
             </div>
-            <span className="badge badge-green" style={{ fontSize: '11px' }}>31% Savings Rate</span>
+            <span className="badge badge-green" style={{ fontSize: '11px' }}>{savingsRatePct}% Savings Rate</span>
           </div>
 
           {/* EMI Obligations */}
           <div className="card">
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>CURRENT EMI</div>
             <div style={{ fontSize: '24px', fontWeight: 800, margin: '8px 0', color: 'var(--text-primary)' }}>
-              ₹8,400
+              ₹{currentEmi.toLocaleString('en-IN')}
             </div>
-            <span className="badge badge-amber" style={{ fontSize: '11px' }}>10.7% DTI (Healthy)</span>
+            <span className="badge badge-amber" style={{ fontSize: '11px' }}>{dtiPct}% DTI (Healthy)</span>
           </div>
 
         </div>
@@ -77,7 +86,7 @@ export default function DashboardOverview() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Income & Cash Flow Analytics</h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>6-Month Financial Trend</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Analyzed from: {fileName}</p>
             </div>
             <div style={{ display: 'flex', gap: '12px', fontSize: '12px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-green)' }}>
@@ -91,7 +100,7 @@ export default function DashboardOverview() {
 
           <div style={{ width: '100%', height: '240px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={incomeData.slice(6)}>
+              <AreaChart data={incomeTrends ? incomeTrends.slice(6) : []}>
                 <defs>
                   <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#16A34A" stopOpacity={0.4}/>
@@ -189,7 +198,7 @@ export default function DashboardOverview() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div>
             <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Recent Financial Activity</h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Verified Bank Transactions</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Verified Bank Transactions ({fileName})</p>
           </div>
           <Link to="/dashboard/transactions" className="btn btn-outline btn-sm">
             View All Transactions
@@ -207,7 +216,7 @@ export default function DashboardOverview() {
               </tr>
             </thead>
             <tbody>
-              {recentTransactions.slice(0, 5).map((t) => (
+              {(transactions || []).slice(0, 5).map((t) => (
                 <tr key={t.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{t.date}</td>
                   <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>{t.description}</td>

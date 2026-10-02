@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import { Search, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { recentTransactions, monthlyTransactions } from '../data/mockData';
+import { monthlyTransactions } from '../data/mockData';
+import { useStatement } from '../contexts/StatementContext';
 
 export default function TransactionsPage() {
+  const { statementData } = useStatement();
+  const { transactions, fileName } = statementData;
+
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
 
@@ -15,7 +19,7 @@ export default function TransactionsPage() {
     { name: 'Utilities', value: 10, color: '#737373' }
   ];
 
-  const filtered = recentTransactions.filter(t => {
+  const filtered = (transactions || []).filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase()) ||
                           t.category.toLowerCase().includes(search.toLowerCase());
     const matchesCat = filterCategory === 'All' || t.category === filterCategory;
@@ -27,7 +31,7 @@ export default function TransactionsPage() {
       <div>
         <h1 style={{ fontSize: '28px', fontWeight: 800 }}>Transaction Analytics</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>
-          Categorized spending analysis and recurring flow detection.
+          Categorized spending analysis & extracted transactions from statement: <strong>{fileName}</strong>
         </p>
       </div>
 
@@ -93,7 +97,7 @@ export default function TransactionsPage() {
           </div>
 
           <div style={{ display: 'flex', gap: '8px' }}>
-            {['All', 'Income', 'Expense', 'Loan'].map((cat) => (
+            {['All', 'Income', 'Expense', 'Loan', 'Savings'].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilterCategory(cat)}

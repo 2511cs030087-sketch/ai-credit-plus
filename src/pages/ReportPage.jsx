@@ -1,12 +1,20 @@
 import { Download, Printer, ShieldCheck, Sparkles, FileText, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useStatement } from '../contexts/StatementContext';
 
 export default function ReportPage() {
   const { user } = useAuth();
+  const { statementData } = useStatement();
+  const { financials, creditScoreData, fileName, uploadDate } = statementData;
+  const { monthlyIncome, savingsAmount, currentEmi } = financials;
+  const { score, rating, breakdown } = creditScoreData;
 
   const handleDownload = () => {
     window.print();
   };
+
+  const savingsRatePct = monthlyIncome > 0 ? Math.round((savingsAmount / monthlyIncome) * 100) : 31;
+  const dtiPct = monthlyIncome > 0 ? ((currentEmi / monthlyIncome) * 100).toFixed(1) : '10.7';
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '28px' }}>
@@ -51,7 +59,7 @@ export default function ReportPage() {
           <div style={{ textAlign: 'right' }}>
             <div className="badge badge-green">VERIFIED REPORT</div>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
-              Date: Sept 26, 2026 • Ref ID: AIC-98742
+              Processed: {uploadDate} • Ref: {fileName}
             </div>
           </div>
         </div>
@@ -71,8 +79,8 @@ export default function ReportPage() {
             <div style={{ fontSize: '15px', fontWeight: 700 }}>{user?.pan || 'ABCPD1234E'}</div>
           </div>
           <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ESTIMATED ANNUAL INCOME</div>
-            <div style={{ fontSize: '15px', fontWeight: 700 }}>{user?.income || '₹12,50,000/yr'}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>MONTHLY INFLOW</div>
+            <div style={{ fontSize: '15px', fontWeight: 700 }}>₹{monthlyIncome.toLocaleString('en-IN')}</div>
           </div>
         </div>
 
@@ -80,13 +88,13 @@ export default function ReportPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
           <div style={{ border: '1px solid var(--border-red)', backgroundColor: 'var(--brand-red-glow)', padding: '20px', borderRadius: 'var(--radius-md)' }}>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>AI CREDIT SCORE</div>
-            <div style={{ fontSize: '42px', fontWeight: 900, color: 'var(--text-primary)', margin: '6px 0' }}>782</div>
-            <span className="badge badge-green">Excellent Rating</span>
+            <div style={{ fontSize: '42px', fontWeight: 900, color: 'var(--text-primary)', margin: '6px 0' }}>{score}</div>
+            <span className="badge badge-green">{rating} Rating</span>
           </div>
 
           <div style={{ border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', padding: '20px', borderRadius: 'var(--radius-md)' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>FINANCIAL HEALTH SCORE</div>
-            <div style={{ fontSize: '42px', fontWeight: 900, color: 'var(--accent-green)', margin: '6px 0' }}>82%</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>SAVINGS RATE</div>
+            <div style={{ fontSize: '42px', fontWeight: 900, color: 'var(--accent-green)', margin: '6px 0' }}>{savingsRatePct}%</div>
             <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Low Risk Profile</span>
           </div>
         </div>
@@ -104,18 +112,11 @@ export default function ReportPage() {
               </tr>
             </thead>
             <tbody>
-              {[
-                { factor: 'Payment Behavior', weight: '25%', score: '92%', impact: '+14 pts' },
-                { factor: 'Cash Flow Stability', weight: '20%', score: '84%', impact: '+11 pts' },
-                { factor: 'Income Consistency', weight: '15%', score: '88%', impact: '+12 pts' },
-                { factor: 'Savings Behavior', weight: '15%', score: '78%', impact: '+8 pts' },
-                { factor: 'Debt Burden (DTI)', weight: '15%', score: '81%', impact: '-6 pts' },
-                { factor: 'Transaction Stability', weight: '10%', score: '86%', impact: '+7 pts' }
-              ].map((row, idx) => (
+              {(breakdown || []).map((row, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '10px', fontWeight: 600 }}>{row.factor}</td>
+                  <td style={{ padding: '10px', fontWeight: 600 }}>{row.name}</td>
                   <td style={{ padding: '10px' }}>{row.weight}</td>
-                  <td style={{ padding: '10px' }}>{row.score}</td>
+                  <td style={{ padding: '10px' }}>{row.score}%</td>
                   <td style={{ padding: '10px', textAlign: 'right', fontWeight: 700, color: row.impact.startsWith('+') ? 'var(--accent-green)' : 'var(--brand-red)' }}>
                     {row.impact}
                   </td>
@@ -129,7 +130,7 @@ export default function ReportPage() {
         <div style={{ backgroundColor: 'var(--bg-tertiary)', padding: '20px', borderRadius: 'var(--radius-md)' }}>
           <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>AI Advisor Summary & Key Findings</h3>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            The applicant exhibits high payment discipline, healthy monthly savings rate (31%), and low debt obligations (10.7% DTI). Recommended for pre-approved loan products up to ₹8,00,000 at prime interest rates (9.4%–12.5%).
+            Extracted from bank statement <strong>{fileName}</strong>: The applicant exhibits verified monthly inflows of ₹{monthlyIncome.toLocaleString('en-IN')}, a savings rate of {savingsRatePct}%, and a Debt-to-Income ratio of {dtiPct}%. Recommended for pre-approved loan products up to ₹8,00,000 at prime interest rates.
           </p>
         </div>
       </div>

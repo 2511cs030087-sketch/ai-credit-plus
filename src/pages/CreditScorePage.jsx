@@ -2,18 +2,20 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, TrendingUp, HelpCircle, CheckCircle2, AlertTriangle, ArrowRight, Cpu } from 'lucide-react';
 import CreditScoreCard from '../components/CreditScoreCard';
+import { useStatement } from '../contexts/StatementContext';
 
 export default function CreditScorePage() {
-  const score = 782;
-  const rating = 'Excellent';
+  const { statementData } = useStatement();
+  const { creditScoreData, fileName, uploadDate } = statementData;
+  const { score, rating, breakdown } = creditScoreData;
 
-  const factorList = [
-    { name: 'Payment Behavior', percentage: 92, weight: '25%', impact: '+14 pts', positive: true, detail: 'Consistent on-time utility & loan bill payments over 12 months.' },
-    { name: 'Cash Flow Stability', percentage: 84, weight: '20%', impact: '+11 pts', positive: true, detail: 'Positive net liquid cash flow (₹36,200/mo) maintained every month.' },
-    { name: 'Income Consistency', percentage: 88, weight: '15%', impact: '+12 pts', positive: true, detail: 'Verified recurring monthly salary/revenue deposits for 6+ consecutive months.' },
-    { name: 'Savings Behavior', percentage: 78, weight: '15%', impact: '+8 pts', positive: true, detail: 'Active savings rate of 31% of gross income provides strong buffer protection.' },
-    { name: 'Debt Burden (DTI)', percentage: 81, weight: '15%', impact: '-6 pts', positive: false, detail: 'Current monthly EMI obligations (₹8,400) account for 10.7% of income.' },
-    { name: 'Transaction Stability', percentage: 86, weight: '10%', impact: '+7 pts', positive: true, detail: 'Low occurrence of impulsive large debits or overdraft penalties.' }
+  const factorList = breakdown || [
+    { name: 'Payment Behavior', score: 92, weight: '25%', impact: '+14 pts', positive: true, detail: 'Consistent on-time utility & loan bill payments over 12 months.' },
+    { name: 'Cash Flow Stability', score: 84, weight: '20%', impact: '+11 pts', positive: true, detail: 'Positive net liquid cash flow maintained every month.' },
+    { name: 'Income Consistency', score: 88, weight: '15%', impact: '+12 pts', positive: true, detail: 'Verified recurring monthly salary/revenue deposits for 6+ consecutive months.' },
+    { name: 'Savings Behavior', score: 78, weight: '15%', impact: '+8 pts', positive: true, detail: 'Active savings rate of monthly income provides strong buffer protection.' },
+    { name: 'Debt Burden (DTI)', score: 81, weight: '15%', impact: '-6 pts', positive: false, detail: 'Current monthly EMI obligations account for healthy income share.' },
+    { name: 'Transaction Stability', score: 86, weight: '10%', impact: '+7 pts', positive: true, detail: 'Low occurrence of impulsive large debits or overdraft penalties.' }
   ];
 
   return (
@@ -23,7 +25,7 @@ export default function CreditScorePage() {
       <div>
         <h1 style={{ fontSize: '28px', fontWeight: 800 }}>AI Credit Score Intelligence</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>
-          Deterministic multi-factor analysis based on verified financial behavior and alternative signals.
+          Deterministic multi-factor analysis derived from bank statement: <strong>{fileName}</strong> (Processed: {uploadDate})
         </p>
       </div>
 
@@ -39,7 +41,7 @@ export default function CreditScorePage() {
               <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Explainable AI Scoring Architecture</h3>
             </div>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              Unlike traditional opaque credit scores, AI Credit+ calculates your creditworthiness using transparent, auditable financial rules weighted across 6 core behavior dimensions.
+              Unlike traditional opaque credit scores, AI Credit+ calculates your creditworthiness using transparent, auditable financial rules weighted across 6 core behavior dimensions extracted directly from your bank statement.
             </p>
           </div>
 
@@ -108,7 +110,7 @@ export default function CreditScorePage() {
                   <div
                     style={{
                       height: '100%',
-                      width: `${f.percentage}%`,
+                      width: `${f.score || f.percentage}%`,
                       backgroundColor: f.positive ? 'var(--accent-green)' : 'var(--brand-red)',
                       borderRadius: 'var(--radius-full)'
                     }}

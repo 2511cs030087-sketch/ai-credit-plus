@@ -3,10 +3,16 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import AIChatDrawer from './AIChatDrawer';
+import { useStatement } from '../contexts/StatementContext';
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [aiChatOpen, setAIChatOpen] = useState(false);
+  const { statementData } = useStatement();
+
+  const { financials, creditScoreData } = statementData;
+  const { monthlyIncome, monthlyExpenses, savingsAmount, currentEmi } = financials;
+  const { score } = creditScoreData;
 
   return (
     <div className="dashboard-wrapper">
@@ -26,11 +32,11 @@ export default function DashboardLayout() {
         isOpen={aiChatOpen}
         onClose={() => setAIChatOpen(false)}
         contextData={{
-          score: 782,
-          income: 78500,
-          expenses: 42300,
-          savings: 24200,
-          emi: 8400
+          score: score || 782,
+          income: monthlyIncome || 78500,
+          expenses: monthlyExpenses || 42300,
+          savings: savingsAmount || 24200,
+          emi: currentEmi || 8400
         }}
       />
     </div>

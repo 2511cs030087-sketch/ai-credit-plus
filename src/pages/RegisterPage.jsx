@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Sparkles, ArrowRight } from 'lucide-react';
+import { Shield, Sparkles, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -18,6 +18,9 @@ export default function RegisterPage() {
     agreeTerms: true
   });
 
+  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -28,13 +31,30 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccessMsg('');
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match. Please re-enter.');
       return;
     }
-    const success = await register(formData);
-    if (success) {
-      navigate('/dashboard');
+
+    if (!formData.agreeTerms) {
+      setError('You must agree to the Terms of Service & Privacy Policy.');
+      return;
+    }
+
+    try {
+      const success = await register(formData);
+      if (success) {
+        setSuccessMsg('Account created successfully! Navigating to dashboard...');
+        setTimeout(() => navigate('/dashboard'), 400);
+      } else {
+        setError('Registration failed. Please check your information.');
+      }
+    } catch (err) {
+      setError('Registration error occurred. Entering fallback dashboard mode...');
+      setTimeout(() => navigate('/dashboard'), 500);
     }
   };
 
@@ -92,6 +112,18 @@ export default function RegisterPage() {
               Get started with your free AI Credit+ profile
             </p>
           </div>
+
+          {error && (
+            <div style={{ padding: '12px 16px', backgroundColor: 'var(--brand-red-glow)', border: '1px solid var(--border-red)', borderRadius: 'var(--radius-sm)', color: 'var(--brand-red-bright)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <AlertCircle size={16} /> {error}
+            </div>
+          )}
+
+          {successMsg && (
+            <div style={{ padding: '12px 16px', backgroundColor: 'rgba(22, 163, 74, 0.1)', border: '1px solid rgba(22, 163, 74, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--accent-green)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <CheckCircle size={16} /> {successMsg}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="input-group">
